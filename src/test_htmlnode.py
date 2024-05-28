@@ -1,5 +1,5 @@
 import unittest
-from htmlnode import HTMLNode
+from htmlnode import HTMLNode, LeafNode
 
 
 class TestHtmlNode(unittest.TestCase):
@@ -12,8 +12,27 @@ class TestHtmlNode(unittest.TestCase):
         html_node = HTMLNode(props={"href": "https://www.google.com", "target": "_blank"})
         self.assertEqual(
             html_node.props_to_html(),
-            '''href="https://www.google.com" target="_blank" ''',
+            ''' href="https://www.google.com" target="_blank"''',
         )
+
+
+class TestLeafNode(unittest.TestCase):
+    def test_children_arg_raises_exception(self):
+        with self.assertRaises(TypeError) as context:
+            LeafNode('test', children='test')
+        self.assertEqual(str(context.exception), 'LeafNode cannot have children')
+
+    def test_to_html_empty_args_raises_exception(self):
+        self.assertRaises(TypeError, LeafNode)
+
+    def test_to_html_falsy_value(self):
+        with self.assertRaises(ValueError) as context:
+            LeafNode('').to_html()
+        self.assertEqual(str(context.exception), 'LeafNode must have a value')
+
+    def test_to_html_empty_tag(self):
+        test_leaf = LeafNode('abc')
+        self.assertEqual(test_leaf.to_html(), 'abc')
 
 
 if __name__ == '__main__':

@@ -34,6 +34,10 @@ class TestLeafNode(unittest.TestCase):
         test_leaf = LeafNode('abc')
         self.assertEqual(test_leaf.to_html(), 'abc')
 
+    def test_to_html(self):
+        test_leaf = LeafNode('abc', 'a', props={"href": "https://www.example.com", "target": "_blank"})
+        self.assertEqual(test_leaf.to_html(), '<a href="https://www.example.com" target="_blank">abc</a>')
+
 
 if __name__ == '__main__':
     unittest.main()

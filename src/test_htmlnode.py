@@ -17,11 +17,6 @@ class TestHtmlNode(unittest.TestCase):
 
 
 class TestLeafNode(unittest.TestCase):
-    def test_children_arg_raises_exception(self):
-        with self.assertRaises(TypeError) as context:
-            LeafNode('test', children='test')
-        self.assertEqual(str(context.exception), 'LeafNode cannot have children')
-
     def test_to_html_empty_args_raises_exception(self):
         self.assertRaises(TypeError, LeafNode)
 

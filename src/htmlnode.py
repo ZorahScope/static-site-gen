@@ -9,9 +9,9 @@ class HTMLNode:
         raise NotImplementedError
 
     def props_to_html(self):
-        if not isinstance(self.props, dict) or not self.props:
-            raise ValueError("Invalid or empty properties")
         result = ''
+        if not isinstance(self.props, dict) or not self.props:
+            return result
         for attr, value in self.props.items():
             result += f' {attr}="{value}"'
         return result

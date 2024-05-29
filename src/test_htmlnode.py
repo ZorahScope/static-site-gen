@@ -8,11 +8,18 @@ class TestHtmlNode(unittest.TestCase):
         html_node2 = HTMLNode()
         self.assertEqual(html_node, html_node2)
 
-    def test_props(self):
+    def test_props_to_html(self):
         html_node = HTMLNode(props={"href": "https://www.google.com", "target": "_blank"})
         self.assertEqual(
             html_node.props_to_html(),
             ''' href="https://www.google.com" target="_blank"''',
+        )
+
+    def test_props_to_html_if_empty(self):
+        html_node = HTMLNode(props={})
+        self.assertEqual(
+            html_node.props_to_html(),
+            ''
         )
 
 

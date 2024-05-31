@@ -30,6 +30,16 @@ class TestTextNode(unittest.TestCase):
             'TextNode(This is a text node, 1, https://www.boot.dev)', repr(node)
         )
 
+    def test_img_text_node_no_url(self):
+        with self.assertRaises(ValueError) as context:
+            TextNode("Image alt text", TextType.IMAGE, "")
+        self.assertEqual(str(context.exception), "URL must be provided for image TextNode")
+
+    def test_link_text_node_no_url(self):
+        with self.assertRaises(ValueError) as context:
+            TextNode("link example text", TextType.LINK, "")
+        self.assertEqual(str(context.exception), "URL must be provided for link TextNode")
+
 
 class TestTextNodeToHTMLNode(unittest.TestCase):
     def test_incorrect_text_type(self):

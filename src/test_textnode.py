@@ -1,5 +1,5 @@
 import unittest
-from textnode import TextType, TextNode, text_node_to_html_node
+from textnode import TextType, TextNode, text_node_to_html_node, split_nodes_delimiter
 from htmlnode import LeafNode
 
 
@@ -68,6 +68,56 @@ class TestTextNodeToHTMLNode(unittest.TestCase):
             text_node_to_html_node(test_text),
             LeafNode("This is a text node", "b")
         )
+
+
+class TestSplitNodesDelimiter(unittest.TestCase):
+    def test_expected_output(self):
+        node = TextNode("This is text with a `code block` word", TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+        expected_output = [
+            TextNode("This is text with a ", TextType.TEXT, None),
+            TextNode("code block", TextType.CODE, None),
+            TextNode(" word", TextType.TEXT, None),
+        ]
+        self.assertEqual(new_nodes, expected_output)
+
+    def test_expected_output_2(self):
+        node = TextNode("This `first` and `second` examples.", TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+        expected_output = [
+            TextNode("This ", TextType.TEXT),
+            TextNode("first", TextType.CODE),
+            TextNode(" and ", TextType.TEXT),
+            TextNode("second", TextType.CODE),
+            TextNode(" examples.", TextType.TEXT)
+        ]
+        self.assertEqual(new_nodes, expected_output)
+
+    def test_without_delimiters_in_node(self):
+        node = TextNode("This has no code blocks.", TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+        expected_output = [
+            TextNode("This has no code blocks.", TextType.TEXT)
+        ]
+        self.assertEqual(new_nodes, expected_output)
+
+    def test_with_delimiters_at_start_and_end(self):
+        node = TextNode("`code` block at start and end `example`.", TextType.TEXT)
+        new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
+        expected_output = [
+            TextNode("", TextType.TEXT),
+            TextNode("code", TextType.CODE),
+            TextNode(" block at start and end ", TextType.TEXT),
+            TextNode("example", TextType.CODE),
+            TextNode(".", TextType.TEXT)
+        ]
+        self.assertEqual(new_nodes, expected_output)
+
+    def test_unbalanced_delimiters(self):
+        node = TextNode("This is `unbalanced code block example.", TextType.TEXT)
+        with self.assertRaises(Exception) as context:
+            split_nodes_delimiter([node], "`", TextType.CODE)
+        self.assertEqual(str(context.exception), 'Odd or missing amount of delimiters')
 
 
 if __name__ == '__main__':

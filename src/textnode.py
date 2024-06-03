@@ -60,3 +60,30 @@ def text_node_to_html_node(text_node):
             return LeafNode('', "img", {'src': text_node.url, 'alt': text_node.text})
         case _:
             raise TypeError(f'Invalid text type')
+
+
+def split_nodes_delimiter(old_nodes, delimiter, text_type):
+    def validate_delimiter_balance(node):
+        delimiter_count = node.text.count(delimiter)
+        if delimiter_count % 2 != 0:
+            raise Exception('Odd or missing amount of delimiters')
+
+    def parse_old_nodes(node):
+        validate_delimiter_balance(node)
+        new_text_nodes = node.text.split(delimiter)
+        result = []
+
+        for idx, text in enumerate(new_text_nodes):
+            if idx % 2 == 0:  # outside of delimiter
+                result.append(TextNode(text, TextType.TEXT))
+            if idx % 2 == 1:  # Inside of delimiter
+                result.append(TextNode(text, text_type))
+        return result
+
+    new_nodes = []
+    for old_node in old_nodes:
+        if old_node.text_type is not TextType.TEXT:
+            new_nodes.append(old_node)
+        else:
+            new_nodes.extend(parse_old_nodes(old_node))
+    return new_nodes

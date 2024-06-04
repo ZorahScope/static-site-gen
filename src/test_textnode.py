@@ -1,5 +1,13 @@
 import unittest
-from textnode import TextType, TextNode, text_node_to_html_node, split_nodes_delimiter
+from textnode import (
+    TextType,
+    TextNode,
+    text_node_to_html_node,
+    split_nodes_delimiter,
+    extract_markdown_links,
+    extract_markdown_images,
+)
+
 from htmlnode import LeafNode
 
 
@@ -118,6 +126,66 @@ class TestSplitNodesDelimiter(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             split_nodes_delimiter([node], "`", TextType.CODE)
         self.assertEqual(str(context.exception), 'Odd or missing amount of delimiters')
+
+
+class TestExtractMarkdownImages(unittest.TestCase):
+    def test_extract_markdown_img(self):
+        text = "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and ![another](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/dfsdkjfd.png)"
+
+        expected_output = [
+            ('image', 'https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png'),
+            ('another', 'https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/dfsdkjfd.png')
+        ]
+
+        self.assertEqual(
+            extract_markdown_images(text),
+            expected_output
+        )
+
+    def test_markdown_without_img(self):
+        text = "Lorem ipsum dolor sit amet consectetur adipiscing elit arcu bibendum etiam taciti"
+        expected_output = []
+        self.assertEqual(
+            extract_markdown_images(text),
+            expected_output
+        )
+
+    def test_img_regex_on_link_markdown(self):
+        text = "This is text with a [link](https://www.example.com) and [another](https://www.example.com/another)"
+        expected_output = []
+        self.assertEqual(
+            extract_markdown_images(text),
+            expected_output
+        )
+
+
+class TestExtractMarkdownLinks(unittest.TestCase):
+    def test_extract_markdown_link(self):
+        text = "This is text with a [link](https://www.example.com) and [another](https://www.example.com/another)"
+
+        expected_output = [("link", "https://www.example.com"), ("another", "https://www.example.com/another")]
+
+        self.assertEqual(
+            extract_markdown_links(text),
+            expected_output
+        )
+        pass
+
+    def test_markdown_without_link(self):
+        text = "Lorem ipsum dolor sit amet consectetur adipiscing elit arcu bibendum etiam taciti"
+        expected_output = []
+        self.assertEqual(
+            extract_markdown_links(text),
+            expected_output
+        )
+
+    def test_link_regex_on_img_markdown(self):
+        text = "This is text with an ![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) and ![another](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/dfsdkjfd.png)"
+        expected_output = []
+        self.assertEqual(
+            extract_markdown_links(text),
+            expected_output
+        )
 
 
 if __name__ == '__main__':

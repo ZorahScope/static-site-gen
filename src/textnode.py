@@ -99,7 +99,7 @@ def split_nodes_image(old_nodes):
     def split_nodes(node: TextNode):
         images = extract_markdown_images(node.text)
         if images:
-            split_text = node.text.split(delimiter_template.format(images[0][0], images[0][1]))
+            split_text = node.text.split(delimiter_template.format(images[0][0], images[0][1]), maxsplit=1)
             first_string = split_text.pop(0)
             first_img = images.pop(0)
             new_nodes.append(TextNode(first_string, TextType.TEXT))
@@ -124,7 +124,7 @@ def split_nodes_link(old_nodes):
     def split_nodes(node: TextNode):
         links = extract_markdown_links(node.text)
         if links:
-            split_text = node.text.split(delimiter_template.format(links[0][0], links[0][1]))
+            split_text = node.text.split(delimiter_template.format(links[0][0], links[0][1]), maxsplit=1)
             first_string = split_text.pop(0)
             first_link = links.pop(0)
             new_nodes.append(TextNode(first_string, TextType.TEXT))

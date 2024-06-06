@@ -24,7 +24,9 @@ class TextNode:
         )
 
     def __repr__(self):
-        return f'TextNode({self.text}, {self.text_type}, {self.url})'
+        if self.url is None:
+            return f'TextNode("{self.text}", {self.text_type}, None)'
+        return f'TextNode("{self.text}", {self.text_type}, "{self.url}")'
 
 
 class TextType(Enum):
@@ -87,6 +89,56 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
             new_nodes.append(old_node)
         else:
             new_nodes.extend(parse_old_nodes(old_node))
+    return new_nodes
+
+
+def split_nodes_image(old_nodes):
+    new_nodes = []
+    delimiter_template = "![{}]({})"
+
+    def split_nodes(node: TextNode):
+        images = extract_markdown_images(node.text)
+        if images:
+            split_text = node.text.split(delimiter_template.format(images[0][0], images[0][1]))
+            first_string = split_text.pop(0)
+            first_img = images.pop(0)
+            new_nodes.append(TextNode(first_string, TextType.TEXT))
+            new_nodes.append(TextNode(text=first_img[0], text_type=TextType.IMAGE, url=first_img[1]))
+
+            if split_text[0]:
+                remainder = TextNode(split_text[-1], TextType.TEXT)
+                split_nodes(remainder)
+            return
+        else:
+            new_nodes.append(node)
+
+    for old_node in old_nodes:
+        split_nodes(old_node)
+    return new_nodes
+
+
+def split_nodes_link(old_nodes):
+    new_nodes = []
+    delimiter_template = "[{}]({})"
+
+    def split_nodes(node: TextNode):
+        links = extract_markdown_links(node.text)
+        if links:
+            split_text = node.text.split(delimiter_template.format(links[0][0], links[0][1]))
+            first_string = split_text.pop(0)
+            first_link = links.pop(0)
+            new_nodes.append(TextNode(first_string, TextType.TEXT))
+            new_nodes.append(TextNode(text=first_link[0], text_type=TextType.LINK, url=first_link[1]))
+
+            if split_text[0]:
+                remainder = TextNode(split_text[-1], TextType.TEXT)
+                split_nodes(remainder)
+            return
+        else:
+            new_nodes.append(node)
+
+    for old_node in old_nodes:
+        split_nodes(old_node)
     return new_nodes
 
 

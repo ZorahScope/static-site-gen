@@ -3,8 +3,26 @@ from htmlnode import LeafNode
 import re
 
 
+class TextType(Enum):
+    TEXT = 1
+    BOLD = 2
+    ITALIC = 3
+    CODE = 4
+    LINK = 5
+    IMAGE = 6
+
+    def __eq__(self, other):
+        if isinstance(other, TextType):
+            return self.value == other.value
+        if isinstance(other, int):
+            return self.value == other
+        if isinstance(other, str):
+            return self.name.lower() == other.lower()
+        return super().__eq__(other)
+
+
 class TextNode:
-    def __init__(self, text, text_type, url=None):
+    def __init__(self, text: str, text_type: TextType, url: str = None):
 
         if text_type == TextType.LINK and (url is None or url == ""):
             raise ValueError("URL must be provided for link TextNode")
@@ -29,25 +47,7 @@ class TextNode:
         return f'TextNode("{self.text}", {self.text_type}, "{self.url}")'
 
 
-class TextType(Enum):
-    TEXT = 1
-    BOLD = 2
-    ITALIC = 3
-    CODE = 4
-    LINK = 5
-    IMAGE = 6
-
-    def __eq__(self, other):
-        if isinstance(other, TextType):
-            return self.value == other.value
-        if isinstance(other, int):
-            return self.value == other
-        if isinstance(other, str):
-            return self.name.lower() == other.lower()
-        return super().__eq__(other)
-
-
-def text_node_to_html_node(text_node):
+def text_node_to_html_node(text_node: TextNode) -> LeafNode:
     match text_node.text_type:
         case TextType.TEXT:
             return LeafNode(text_node.text)
@@ -65,13 +65,13 @@ def text_node_to_html_node(text_node):
             raise TypeError(f'Invalid text type')
 
 
-def split_nodes_delimiter(old_nodes, delimiter, text_type):
-    def validate_delimiter_balance(node):
+def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: TextType) -> list[TextNode]:
+    def validate_delimiter_balance(node: TextNode) -> None:
         delimiter_count = node.text.count(delimiter)
         if delimiter_count % 2 != 0:
             raise Exception('Odd or missing amount of delimiters')
 
-    def parse_old_nodes(node):
+    def parse_old_nodes(node: TextNode) -> list[TextNode]:
         validate_delimiter_balance(node)
         new_text_nodes = node.text.split(delimiter)
         result = []
@@ -92,11 +92,11 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
     return new_nodes
 
 
-def split_nodes_image(old_nodes):
+def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
     new_nodes = []
     delimiter_template = "![{}]({})"
 
-    def split_nodes(node: TextNode):
+    def split_nodes(node: TextNode) -> None:
         images = extract_markdown_images(node.text)
         if images:
             split_text = node.text.split(delimiter_template.format(images[0][0], images[0][1]), maxsplit=1)
@@ -117,11 +117,11 @@ def split_nodes_image(old_nodes):
     return new_nodes
 
 
-def split_nodes_link(old_nodes):
+def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
     new_nodes = []
     delimiter_template = "[{}]({})"
 
-    def split_nodes(node: TextNode):
+    def split_nodes(node: TextNode) -> None:
         links = extract_markdown_links(node.text)
         if links:
             split_text = node.text.split(delimiter_template.format(links[0][0], links[0][1]), maxsplit=1)
@@ -142,11 +142,11 @@ def split_nodes_link(old_nodes):
     return new_nodes
 
 
-def extract_markdown_images(text):
+def extract_markdown_images(text: str) -> list[tuple[str, str]]:
     img_regex = re.compile(r"!\[(.*?)]\((.*?)\)")
     return re.findall(img_regex, text)
 
 
-def extract_markdown_links(text):
+def extract_markdown_links(text: str) -> list[tuple[str, str]]:
     link_regex = re.compile(r"[^!]\[(.*?)]\((.*?)\)")
     return re.findall(link_regex, text)

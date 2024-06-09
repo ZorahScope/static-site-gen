@@ -3,6 +3,7 @@ from textnode import (
     TextType,
     TextNode,
     text_node_to_html_node,
+    text_to_textnodes,
     split_nodes_delimiter,
     split_nodes_image,
     split_nodes_link,
@@ -49,6 +50,32 @@ class TestTextNode(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             TextNode("link example text", TextType.LINK, "")
         self.assertEqual(str(context.exception), "URL must be provided for link TextNode")
+
+
+class TestTextToTextNodes(unittest.TestCase):
+
+    def test_text_to_textnodes(self):
+        markdown_text = ("This is **text** with an *italic* word and a `code block` and an "
+                         "![image](https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png) "
+                         "and a [link](https://boot.dev)")
+
+        expected_output = [
+            TextNode("This is ", TextType.TEXT),
+            TextNode("text", TextType.BOLD),
+            TextNode(" with an ", TextType.TEXT),
+            TextNode("italic", TextType.ITALIC),
+            TextNode(" word and a ", TextType.TEXT),
+            TextNode("code block", TextType.CODE),
+            TextNode(" and an ", TextType.TEXT),
+            TextNode("image", TextType.IMAGE,
+                     "https://storage.googleapis.com/qvault-webapp-dynamic-assets/course_assets/zjjcJKZ.png"),
+            TextNode(" and a ", TextType.TEXT),
+            TextNode("link", TextType.LINK, "https://boot.dev"),
+        ]
+        self.assertEqual(
+            text_to_textnodes(markdown_text),
+            expected_output,
+        )
 
 
 class TestTextNodeToHTMLNode(unittest.TestCase):

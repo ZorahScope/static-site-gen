@@ -65,6 +65,15 @@ def text_node_to_html_node(text_node: TextNode) -> LeafNode:
             raise TypeError(f'Invalid text type')
 
 
+def text_to_textnodes(text: str) -> list[TextNode]:
+    node = TextNode(text, TextType.TEXT)
+    temp = split_nodes_delimiter([node], '**', TextType.BOLD)
+    temp = split_nodes_delimiter(temp, '*', TextType.ITALIC)
+    temp = split_nodes_delimiter(temp, '`', TextType.CODE)
+    temp = split_nodes_link(temp)
+    return split_nodes_image(temp)
+
+
 def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: TextType) -> list[TextNode]:
     def validate_delimiter_balance(node: TextNode) -> None:
         delimiter_count = node.text.count(delimiter)

@@ -159,3 +159,14 @@ def extract_markdown_images(text: str) -> list[tuple[str, str]]:
 def extract_markdown_links(text: str) -> list[tuple[str, str]]:
     link_regex = re.compile(r"[^!]\[(.*?)]\((.*?)\)")
     return re.findall(link_regex, text)
+
+
+def markdown_to_blocks(markdown):
+    block_regex = re.compile(r"\n{2,}")
+    blocks = re.split(block_regex, markdown)
+    while '' in blocks:
+        blocks.remove('')
+    if blocks == []:
+        raise Exception('Empty blocks: Invalid Markdown')
+
+    return list(map(lambda x: x.strip(), blocks))

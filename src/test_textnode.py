@@ -9,6 +9,7 @@ from textnode import (
     split_nodes_link,
     extract_markdown_links,
     extract_markdown_images,
+    markdown_to_blocks
 )
 
 from htmlnode import LeafNode
@@ -308,6 +309,33 @@ class TestExtractMarkdownLinks(unittest.TestCase):
             extract_markdown_links(text),
             expected_output
         )
+
+
+class TestMarkdownToBlocks(unittest.TestCase):
+    def test_markdown_to_blocks(self):
+        block_markdown = ("# This is a heading\n\n"
+                          "This is a paragraph of text. It has some **bold** and *italic* words inside of it.\n\n"
+                          "* This is a list item\n* This is another list item\n"
+                          )
+        output = markdown_to_blocks(block_markdown)
+        expected_output = [
+            '# This is a heading',
+            'This is a paragraph of text. It has some **bold** and *italic* words inside of it.',
+            '* This is a list item\n* This is another list item'
+        ]
+        self.assertEqual(output, expected_output)
+
+    def test_markdown_to_blocks_single_block(self):
+        block_markdown = ("\n\n\n\n# This is a heading\n\n\n\n\n")
+        output = markdown_to_blocks(block_markdown)
+        expected_output = ['# This is a heading']
+        self.assertEqual(output, expected_output)
+
+    def test_markdown_to_blocks_empty(self):
+        empty_markdown = ""
+        with self.assertRaises(Exception) as context:
+            markdown_to_blocks(empty_markdown)
+        self.assertEqual(str(context.exception), 'Empty blocks: Invalid Markdown')
 
 
 if __name__ == '__main__':

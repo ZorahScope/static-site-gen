@@ -1,6 +1,7 @@
 import unittest
 from textnode import (
     TextType,
+    BlockType,
     TextNode,
     text_node_to_html_node,
     text_to_textnodes,
@@ -9,7 +10,8 @@ from textnode import (
     split_nodes_link,
     extract_markdown_links,
     extract_markdown_images,
-    markdown_to_blocks
+    markdown_to_blocks,
+    block_to_block_type,
 )
 
 from htmlnode import LeafNode
@@ -336,6 +338,83 @@ class TestMarkdownToBlocks(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             markdown_to_blocks(empty_markdown)
         self.assertEqual(str(context.exception), 'Empty blocks: Invalid Markdown')
+
+
+class TestBlockToBlockType(unittest.TestCase):
+    def test_block_to_block_type(self):
+        heading_text = '###### This is a heading'
+        code_block_text = '''
+```
+num1 = 1
+num2 = 2
+print(num1 + num2)
+```                
+'''
+        quote_block_text = '''
+> testing multi-line block quotes
+> second line
+> third line
+> etc line        
+'''
+        undorderd_list_text = '''
+- unordered
+* list example
+- third item
+* last item        
+'''
+        ordered_list_text = '''
+1. one
+2. two
+3. three
+4. four        
+'''
+        paragraph_text = '''
+“Pride is not the opposite of shame, but its source. True humility is the antidote to shame.” - Uncle Iroh
+'''
+
+        self.assertEqual(block_to_block_type(heading_text), BlockType.HEADING)
+        self.assertEqual(block_to_block_type(code_block_text), BlockType.CODEBLOCK)
+        self.assertEqual(block_to_block_type(quote_block_text), BlockType.QUOTE)
+        self.assertEqual(block_to_block_type(undorderd_list_text), BlockType.UNORDERED_LIST)
+        self.assertEqual(block_to_block_type(ordered_list_text), BlockType.ORDERED_LIST)
+        self.assertEqual(block_to_block_type(paragraph_text), BlockType.PARAGRAPH)
+
+    def test_block_to_block_type_invalid_markdown(self):
+        heading_text = '####### This is a heading'
+        code_block_text = '''
+```
+num1 = 1
+num2 = 2
+print(num1 + num2)
+``                
+'''
+        quote_block_text = '''
+> testing multi-line block quotes
+> second line
+ third line
+> etc line        
+'''
+        undorderd_list_text = '''
+- unordered
+ list example
+- third item
+* last item        
+'''
+        ordered_list_text = '''
+1. one
+2. two
+8. three
+4. four        
+'''
+        paragraph_text = '''
+“Pride is not the opposite of shame, but its source. True humility is the antidote to shame.” - Uncle Iroh
+'''
+
+        self.assertEqual(block_to_block_type(heading_text), BlockType.PARAGRAPH)
+        self.assertEqual(block_to_block_type(code_block_text), BlockType.PARAGRAPH)
+        self.assertEqual(block_to_block_type(quote_block_text), BlockType.PARAGRAPH)
+        self.assertEqual(block_to_block_type(undorderd_list_text), BlockType.PARAGRAPH)
+        self.assertEqual(block_to_block_type(ordered_list_text), BlockType.PARAGRAPH)
 
 
 if __name__ == '__main__':

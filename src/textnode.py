@@ -21,6 +21,24 @@ class TextType(Enum):
         return super().__eq__(other)
 
 
+class BlockType(Enum):
+    PARAGRAPH = 1
+    HEADING = 2
+    CODEBLOCK = 3
+    QUOTE = 4
+    UNORDERED_LIST = 5
+    ORDERED_LIST = 6
+
+    def __eq__(self, other):
+        if isinstance(other, BlockType):
+            return self.value == other.value
+        if isinstance(other, int):
+            return self.value == other
+        if isinstance(other, str):
+            return self.name.lower() == other.lower()
+        return super().__eq__(other)
+
+
 class TextNode:
     def __init__(self, text: str, text_type: TextType, url: str = None):
 
@@ -161,7 +179,7 @@ def extract_markdown_links(text: str) -> list[tuple[str, str]]:
     return re.findall(link_regex, text)
 
 
-def markdown_to_blocks(markdown):
+def markdown_to_blocks(markdown: str) -> list[str]:
     block_regex = re.compile(r"\n{2,}")
     blocks = re.split(block_regex, markdown)
     while '' in blocks:
@@ -170,3 +188,41 @@ def markdown_to_blocks(markdown):
         raise Exception('Empty blocks: Invalid Markdown')
 
     return list(map(lambda x: x.strip(), blocks))
+
+
+def block_to_block_type(block: str) -> BlockType:
+    header_regex = re.compile(r"^(#{1,6}) (?!#).*$")
+    code_regex = re.compile(r"`{3}[\s\S]+?`{3}")
+    quote_block_regex = re.compile(r"^>.*(\n>.*)*", re.MULTILINE)
+    unordered_list_regex = re.compile(r"^[*-] .*(\n[*-] .*)*$", re.MULTILINE)
+    ordered_list_regex = re.compile(r"^\d\. .*(\n\d\. .*)*$", re.MULTILINE)
+
+    def contains_pattern(pattern: re.Pattern, block: str) -> bool:
+        search_result = re.search(pattern, block)
+        return bool(search_result)
+
+    def is_valid_pattern(pattern: re.Pattern, block: str) -> bool:
+        check_line = lambda block: contains_pattern(pattern, block)
+        block_list = block.strip().splitlines()
+        if pattern == ordered_list_regex:
+            return all(list(map(check_line, block_list))) and is_valid_ordered_list(block)
+        return all(list(map(check_line, block_list)))
+
+    def is_valid_ordered_list(block: str) -> bool:
+        result = []
+        split_ordered_list = block.strip().splitlines()
+        ordered_list = list(enumerate(split_ordered_list, start=1))
+        valid_list_item = lambda li: li[0] == int(li[1][0])
+        return all(list(map(valid_list_item, ordered_list)))
+
+    if contains_pattern(header_regex, block):
+        return BlockType.HEADING
+    if contains_pattern(code_regex, block):
+        return BlockType.CODEBLOCK
+    if contains_pattern(quote_block_regex, block) and is_valid_pattern(quote_block_regex, block):
+        return BlockType.QUOTE
+    if contains_pattern(unordered_list_regex, block) and is_valid_pattern(unordered_list_regex, block):
+        return BlockType.UNORDERED_LIST
+    if contains_pattern(ordered_list_regex, block) and is_valid_pattern(ordered_list_regex, block):
+        return BlockType.ORDERED_LIST
+    return BlockType.PARAGRAPH

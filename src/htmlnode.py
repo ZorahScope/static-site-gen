@@ -2,7 +2,7 @@ from functools import reduce
 
 
 class HTMLNode:
-    def __init__(self, value=None, tag=None, children=None, props=None):
+    def __init__(self, value: str = None, tag: str = None, children: list = None, props: dict = None):
         self.tag = tag
         self.value = value
         self.children = children

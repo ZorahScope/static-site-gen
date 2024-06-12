@@ -12,6 +12,7 @@ from textnode import (
     extract_markdown_images,
     markdown_to_blocks,
     block_to_block_type,
+    markdown_to_html_node,
 )
 
 from htmlnode import LeafNode
@@ -415,6 +416,51 @@ print(num1 + num2)
         self.assertEqual(block_to_block_type(quote_block_text), BlockType.PARAGRAPH)
         self.assertEqual(block_to_block_type(undorderd_list_text), BlockType.PARAGRAPH)
         self.assertEqual(block_to_block_type(ordered_list_text), BlockType.PARAGRAPH)
+
+
+class TestMarkdownToHTMLNode(unittest.TestCase):
+    def test_markdown_to_html_node(self):
+        markdown_doc = (
+"""
+### This is a heading
+
+#### Second heading
+
+```
+num1 = 1
+num2 = 2
+print(num1 + num2)
+```
+
+> this is block
+> quote
+> third line
+
+1. **first**
+2. second
+3. third
+
+* example `unordered` list
+- testing *list*
+* third item
+
+Lorem ipsum **dolor** sit amet [consectetur](www.example.com) adipiscing ![invalid image](img/yeahno.jpg) nascetur 
+fusce dis, blandit nulla risus magna cursus himenaeos commodo eu urna, erat condimentum sem facilisi fames eros natoque 
+mus nostra. Velit hendrerit platea auctor est nascetur, et blandit primis suscipit aliquet vestibulum
+
+"""
+        )
+        
+        expected_output = ('''<div><h3>This is a heading</h3><h4>Second heading</h4><pre><code>num1 = 1
+num2 = 2
+print(num1 + num2)</code></pre><blockquote>this is block
+quote
+third line</blockquote><ol><li><b>first</b></li><li>second</li><li>third</li></ol><ul><li>example <code>unordered</code> list</li><li>testing <i>list</i></li><li>third item</li></ul><p>Lorem ipsum <b>dolor</b> sit amet <a href="www.example.com">consectetur</a> adipiscing <img src="img/yeahno.jpg" alt="invalid image"> nascetur 
+fusce dis, blandit nulla risus magna cursus himenaeos commodo eu urna, erat condimentum sem facilisi fames eros natoque 
+mus nostra. Velit hendrerit platea auctor est nascetur, et blandit primis suscipit aliquet vestibulum</p></div>''')
+        
+        actual_output = markdown_to_html_node(markdown_doc)
+        self.assertEqual(expected_output, actual_output)
 
 
 if __name__ == '__main__':

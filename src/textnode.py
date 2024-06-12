@@ -1,5 +1,5 @@
 from enum import Enum
-from htmlnode import LeafNode
+from htmlnode import HTMLNode, ParentNode, LeafNode
 import re
 
 
@@ -86,10 +86,10 @@ def text_node_to_html_node(text_node: TextNode) -> LeafNode:
 def text_to_textnodes(text: str) -> list[TextNode]:
     node = TextNode(text, TextType.TEXT)
     temp = split_nodes_delimiter([node], '**', TextType.BOLD)
-    temp = split_nodes_delimiter(temp, '*', TextType.ITALIC)
-    temp = split_nodes_delimiter(temp, '`', TextType.CODE)
-    temp = split_nodes_link(temp)
-    return split_nodes_image(temp)
+    temp1 = split_nodes_delimiter(temp, '*', TextType.ITALIC)
+    temp2 = split_nodes_delimiter(temp1, '`', TextType.CODE)
+    temp3 = split_nodes_link(temp2)
+    return split_nodes_image(temp3)
 
 
 def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: TextType) -> list[TextNode]:
@@ -116,7 +116,9 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
             new_nodes.append(old_node)
         else:
             new_nodes.extend(parse_old_nodes(old_node))
-    return new_nodes
+
+    remove_empty_values = lambda node: node.text != ''
+    return list(filter(remove_empty_values, new_nodes))
 
 
 def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
@@ -226,3 +228,107 @@ def block_to_block_type(block: str) -> BlockType:
     if contains_pattern(ordered_list_regex, block) and is_valid_pattern(ordered_list_regex, block):
         return BlockType.ORDERED_LIST
     return BlockType.PARAGRAPH
+
+
+def markdown_to_html_node(markdown: str) -> ParentNode:
+    def header_block_to_html_node(markdown: str) -> ParentNode:
+        header_count = markdown.count('#')
+        header_text = markdown.lstrip('# ')
+        html_node = ParentNode(
+            f"h{header_count}",
+            [LeafNode(header_text)]
+        )
+        return html_node
+
+    def code_block_to_html_node(markdown: str) -> ParentNode:
+        raw_code = markdown.strip('`\n ')  # removes sorrounding backticks, whitespace and new lines
+        code_leaf_node = LeafNode(raw_code, "code")
+        html_node = ParentNode(
+            "pre",
+            [code_leaf_node]
+        )
+        return html_node
+
+    def quote_block_to_html_node(markdown: str) -> ParentNode:
+        strip_quote_markdown = lambda qt: qt.lstrip('> ')
+        quote_text = markdown.splitlines()
+        stripped_quote_text = '\n'.join(list(map(strip_quote_markdown, quote_text)))
+        text_nodes = text_to_textnodes(stripped_quote_text)
+        quote_leaf_nodes = list(map(text_node_to_html_node, text_nodes))
+        html_node = ParentNode(
+            "blockquote",
+            quote_leaf_nodes
+        )
+        return html_node
+
+    def ordered_list_block_to_html_node(markdown: str) -> ParentNode:
+        remove_number = lambda li: li.split(' ', maxsplit=1)[1]
+        markdown_list = list(map(remove_number, markdown.splitlines()))
+        list_nodes = []
+        for li in markdown_list:
+            leaf_nodes = list(map(text_node_to_html_node, text_to_textnodes(li)))
+            node = ParentNode(
+                "li",
+                leaf_nodes
+            )
+            list_nodes.append(node)
+
+        html_list_node = ParentNode(
+            "ol",
+            list_nodes
+        )
+        return html_list_node
+
+    def unordered_list_block_to_html_node(markdown: str) -> ParentNode:
+        remove_bullet = lambda li: li.split(' ', maxsplit=1)[1]
+        markdown_list = list(map(remove_bullet, markdown.splitlines()))
+        list_nodes = []
+        for li in markdown_list:
+            leaf_nodes = list(map(text_node_to_html_node, text_to_textnodes(li)))
+            node = ParentNode(
+                "li",
+                leaf_nodes
+            )
+            list_nodes.append(node)
+
+        html_list_node = ParentNode(
+            "ul",
+            list_nodes
+        )
+        return html_list_node
+
+    def paragraph_block_to_html_node(markdown: str) -> ParentNode:
+        leaf_nodes = list(map(text_node_to_html_node, text_to_textnodes(markdown)))
+        html_node = ParentNode(
+            'p',
+            leaf_nodes
+        )
+
+        return html_node
+
+    def markdown_router(block: str, type: BlockType) -> ParentNode:
+        match type:
+            case BlockType.HEADING:
+                return header_block_to_html_node(block)
+            case BlockType.CODEBLOCK:
+                return code_block_to_html_node(block)
+            case BlockType.QUOTE:
+                return quote_block_to_html_node(block)
+            case BlockType.ORDERED_LIST:
+                return ordered_list_block_to_html_node(block)
+            case BlockType.UNORDERED_LIST:
+                return unordered_list_block_to_html_node(block)
+            case BlockType.PARAGRAPH:
+                return paragraph_block_to_html_node(block)
+
+    html_nodes = []
+    blocks = markdown_to_blocks(markdown)
+
+    for block in blocks:
+        block_type = block_to_block_type(block)
+        html_nodes.append(markdown_router(block, block_type))
+
+    return ParentNode(
+        'div',
+        html_nodes,
+    ).to_html()

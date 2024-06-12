@@ -61,6 +61,8 @@ class ParentNode(HTMLNode):
             raise ValueError('ParentNode must have a tag')
         if self.children is None:
             raise ValueError('ParentNode must have children')
+        if not isinstance(self.children, list):
+            raise ValueError('Children must be a list object')
 
         def concat_children(a, b):
             return a + b.to_html()

@@ -146,13 +146,12 @@ class TestSplitNodesDelimiter(unittest.TestCase):
         node = TextNode("`code` block at start and end `example`.", TextType.TEXT)
         new_nodes = split_nodes_delimiter([node], "`", TextType.CODE)
         expected_output = [
-            TextNode("", TextType.TEXT),
             TextNode("code", TextType.CODE),
             TextNode(" block at start and end ", TextType.TEXT),
             TextNode("example", TextType.CODE),
             TextNode(".", TextType.TEXT)
         ]
-        self.assertEqual(new_nodes, expected_output)
+        self.assertEqual(expected_output, new_nodes)
 
     def test_unbalanced_delimiters(self):
         node = TextNode("This is `unbalanced code block example.", TextType.TEXT)

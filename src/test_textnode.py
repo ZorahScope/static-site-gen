@@ -458,7 +458,7 @@ third line</blockquote><ol><li><b>first</b></li><li>second</li><li>third</li></o
 fusce dis, blandit nulla risus magna cursus himenaeos commodo eu urna, erat condimentum sem facilisi fames eros natoque 
 mus nostra. Velit hendrerit platea auctor est nascetur, et blandit primis suscipit aliquet vestibulum</p></div>''')
         
-        actual_output = markdown_to_html_node(markdown_doc)
+        actual_output = markdown_to_html_node(markdown_doc).to_html()
         self.assertEqual(expected_output, actual_output)
 
 

@@ -89,7 +89,10 @@ def text_to_textnodes(text: str) -> list[TextNode]:
     temp1 = split_nodes_delimiter(temp, '*', TextType.ITALIC)
     temp2 = split_nodes_delimiter(temp1, '`', TextType.CODE)
     temp3 = split_nodes_link(temp2)
-    return split_nodes_image(temp3)
+    temp4 = split_nodes_image(temp3)
+
+    remove_empty_values = lambda node: node.text != ''
+    return list(filter(remove_empty_values, temp4))
 
 
 def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: TextType) -> list[TextNode]:
@@ -177,7 +180,7 @@ def extract_markdown_images(text: str) -> list[tuple[str, str]]:
 
 
 def extract_markdown_links(text: str) -> list[tuple[str, str]]:
-    link_regex = re.compile(r"[^!]\[(.*?)]\((.*?)\)")
+    link_regex = re.compile(r"(?<!!)\[(.*?)]\((.*?)\)")
     return re.findall(link_regex, text)
 
 
@@ -328,7 +331,4 @@ def markdown_to_html_node(markdown: str) -> ParentNode:
         block_type = block_to_block_type(block)
         html_nodes.append(markdown_router(block, block_type))
 
-    return ParentNode(
-        'div',
-        html_nodes,
-    ).to_html()
+    return ParentNode('div', html_nodes)
